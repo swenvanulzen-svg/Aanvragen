@@ -1,0 +1,31 @@
+WERKENDE DUS-AANVRAGENAPP – UPDATE OP GITHUB
+
+1. Pak dit zipbestand uit.
+2. Open je GitHub-repository Aanvragen.
+3. Vervang index.html en sw.js door de nieuwe bestanden.
+   Je mag ook alle vijf bestanden opnieuw uploaden.
+4. Kies Commit changes.
+5. Wacht 1–3 minuten tot GitHub Pages klaar is.
+6. Verwijder de oude app één keer van het beginscherm.
+7. Open de website opnieuw in Safari, vernieuw de pagina en kies:
+   Deel > Zet op beginscherm.
+
+Waarom stap 6 belangrijk is:
+De oude versie kan nog in de cache van de geïnstalleerde web-app staan.
+Deze nieuwe versie gebruikt cacheversie v4 en verwijdert oude caches.
+
+WAT NU WERKT
+- Nieuwe klus opslaan
+- Verplichte velden controleren
+- Aanvragen bekijken en zoeken
+- Status aanpassen
+- Klus aan collega toewijzen
+- Opmerking toevoegen
+- Collega toevoegen en verwijderen
+- Dashboardaantallen
+- Lokale opslag op de telefoon
+- Optionele EmailJS-meldingen
+
+LET OP
+De gegevens staan lokaal op het toestel. Voor één gedeelde lijst op alle telefoons
+is nog een centrale database nodig.

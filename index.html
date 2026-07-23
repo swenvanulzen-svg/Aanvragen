@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f4fc4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Aanvraagbord">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Aanvraagbord Mobiel</title>
+<style>
+:root{
+ --bg:#f4f3ef;--card:#fff;--text:#111;--muted:#686861;--line:#deddd7;
+ --brand:#111;--brand2:#000;--ok:#217a45;--warn:#a85f00;--danger:#bf2f24;--lime:#d7ff38;--orange:#ff6b35;
+ --shadow:0 10px 28px rgba(16,24,40,.10);--r:18px
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+body{padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+.topbar{
+ position:sticky;top:0;z-index:20;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;
+ background:#111;color:#fff;box-shadow:var(--shadow)
+}
+.topbar h1{font-size:1.25rem;margin:0}.topbar p{margin:4px 0 0;font-size:.86rem;opacity:.88}
+main{max-width:680px;margin:0 auto;padding:16px}
+.view{display:none}.view.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+h2,h3{margin:0 0 12px}.muted{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px;box-shadow:var(--shadow)}
+.stat span{font-size:.82rem;color:var(--muted)}.stat strong{display:block;font-size:1.7rem;margin-top:3px}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quick button{min-height:88px;border:0;border-radius:22px;background:#fff;box-shadow:var(--shadow);font-weight:800;color:var(--text);font-size:1rem;padding:14px}
+.quick .primary{background:#ff6b35;color:#111}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
+label{font-weight:750;font-size:.9rem}
+input,select,textarea{width:100%;font:inherit;border:1px solid var(--line);border-radius:13px;padding:13px;background:#fff;color:var(--text)}
+textarea{min-height:110px;resize:vertical}
+.btn{width:100%;border:0;border-radius:14px;padding:14px 15px;font-weight:850;font-size:1rem;cursor:pointer}
+.btn.primary{background:#111;color:#fff}.btn.secondary{background:#ecebe5;color:#111}.btn.success{background:#e1f5e9;color:var(--ok)}.btn.danger{background:#fde9e7;color:var(--danger)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+.actions .full{grid-column:1/-1}
+.job{background:#fff;border:1px solid var(--line);border-radius:22px;padding:15px;box-shadow:var(--shadow);margin-bottom:12px}
+.jobhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.job h3{font-size:1.02rem;margin:0}.meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;color:var(--muted);font-size:.84rem;margin-top:10px}
+.badge{display:inline-flex;border-radius:999px;padding:5px 8px;font-size:.72rem;font-weight:850;white-space:nowrap}
+.nieuw{background:#e9f1ff;color:#174fa8}.behandeling{background:#fff1dc;color:var(--warn)}
+.ingevuld{background:#e2f5e9;color:var(--ok)}.geannuleerd{background:#eef0f3;color:#475467}
+.note{background:#f7f9fc;border-left:4px solid #9db8ec;border-radius:9px;padding:10px;margin-top:10px;font-size:.88rem}
+.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}.toolbar .full{grid-column:1/-1}
+.bottomnav{
+ position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.97);
+ backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+ display:grid;grid-template-columns:repeat(4,1fr);gap:4px
+}
+.bottomnav button{border:0;background:transparent;color:#667085;padding:8px 4px;border-radius:12px;font-size:.72rem;font-weight:750}
+.bottomnav button .icon{display:block;font-size:1.25rem;margin-bottom:2px}
+.bottomnav button.active{background:#d7ff38;color:#111}
+.toast{position:fixed;left:14px;right:14px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:50;background:#172033;color:#fff;padding:13px 15px;border-radius:13px;display:none;box-shadow:var(--shadow);max-width:650px;margin:auto}
+.empty{text-align:center;padding:28px 10px;color:var(--muted)}
+.install{background:#edf4ff;border:1px solid #c9dbfb;color:#19407f;border-radius:13px;padding:12px;margin-bottom:14px;font-size:.9rem}
+@media(min-width:600px){.stats{grid-template-columns:repeat(4,1fr)}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.formgrid .full{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <h1 style="font-size:2rem;letter-spacing:-.08em">DUS<span style="color:#d7ff38">.</span></h1><p style="text-transform:uppercase;letter-spacing:.12em;font-weight:800">Interne aanvragen · DUS IS DOEN</p>
+</header>
+
+<main>
+<section id="home" class="view active">
+  <div id="installHint" class="install">Open dit bestand in je browser. Via het browsermenu kun je het later aan je beginscherm toevoegen zodra het online wordt geplaatst.</div>
+  <div class="stats">
+    <div class="stat"><span>Nieuw</span><strong id="stNieuw">0</strong></div>
+    <div class="stat"><span>Behandeling</span><strong id="stBehandeling">0</strong></div>
+    <div class="stat"><span>Ingevuld</span><strong id="stIngevuld">0</strong></div>
+    <div class="stat"><span>Totaal</span><strong id="stTotaal">0</strong></div>
+  </div>
+  <div class="quick">
+    <button class="primary" onclick="showView('new')">➕<br>Nieuwe klus</button>
+    <button onclick="showView('list')">📋<br>Open klussen</button>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h3>Laatste aanvragen</h3>
+    <div id="latest"></div>
+  </div>
+</section>
+
+<section id="new" class="view">
+  <div class="card">
+    <h2>Nieuwe klus</h2>
+    <form id="requestForm">
+      <div class="formgrid">
+        <div class="field"><label>Locatie</label><input id="location" required placeholder="Plaats of project"></div>
+        <div class="field"><label>Soort vakman</label>
+          <select id="trade" required>
+            <option value="">Kies soort</option><option>Timmerman</option><option>Bouwspecialist</option><option>Betontimmerman</option>
+          </select>
+        </div>
+        <div class="field"><label>Opdrachtgever</label><input id="client" required placeholder="Naam opdrachtgever"></div>
+        <div class="field"><label>Aantal mensen</label><input id="people" type="number" min="1" value="1" required></div>
+        <div class="field"><label>Startdatum</label><input id="startDate" type="date" required></div>
+        <div class="field"><label>Einddatum</label><input id="endDate" type="date"></div>
+        <div class="field"><label>Toewijzen aan</label><select id="owner"></select></div>
+        <div class="field"><label>Prioriteit</label><select id="priority"><option>Normaal</option><option>Hoog</option><option>Spoed</option></select></div>
+        <div class="field full"><label>Werkzaamheden</label><textarea id="work" required placeholder="Omschrijf de werkzaamheden"></textarea></div>
+        <div class="field full"><label>Bijzonderheden</label><textarea id="details" placeholder="Tijden, certificaten, kleding, gereedschap enzovoort"></textarea></div>
+      </div>
+      <button class="btn primary" type="submit">Klus plaatsen</button>
+    </form>
+  </div>
+</section>
+
+<section id="list" class="view">
+  <div class="toolbar">
+    <input class="full" id="search" placeholder="Zoeken">
+    <select id="filterStatus"><option value="">Alle statussen</option><option>Nieuw</option><option>In behandeling</option><option>Ingevuld</option><option>Geannuleerd</option></select>
+    <select id="filterTrade"><option value="">Alle vakgroepen</option><option>Timmerman</option><option>Bouwspecialist</option><option>Betontimmerman</option></select>
+  </div>
+  <div id="requestList"></div>
+</section>
+
+<section id="notify" class="view">
+  <div class="card">
+    <h2>Meldingen instellen</h2>
+    <p class="muted">GitHub Pages kan niet zelf e-mail versturen. Deze app kan EmailJS gebruiken om bij een nieuwe klus automatisch een e-mail naar collega’s te sturen.</p>
+    <div class="field"><label>EmailJS Public Key</label><input id="emailPublicKey"></div>
+    <div class="field"><label>Service ID</label><input id="emailServiceId"></div>
+    <div class="field"><label>Template ID</label><input id="emailTemplateId"></div>
+    <div class="field"><label><input id="notifyEnabled" type="checkbox" style="width:auto"> Meldingen inschakelen</label></div>
+    <button class="btn primary" onclick="saveNotifySettings()">Opslaan</button>
+    <button class="btn secondary" style="margin-top:9px" onclick="testNotify()">Testmelding</button>
+    <p class="muted" style="font-size:.84rem;margin-top:14px">Templatevelden: {{to_email}}, {{to_name}}, {{trade}}, {{location}}, {{client}}, {{start_date}}, {{work}}, {{app_url}}</p>
+  </div>
+</section>
+
+<section id="team" class="view">
+  <div class="card">
+    <h2>Collega toevoegen</h2>
+    <form id="colleagueForm">
+      <div class="field"><label>Naam</label><input id="colName" required></div>
+      <div class="field"><label>E-mail</label><input id="colEmail" type="email" required></div>
+      <button class="btn primary" type="submit">Toevoegen</button>
+    </form>
+  </div>
+  <div class="card"><h2>Collega’s</h2><div id="colleagueList"></div><button class="btn primary" type="button" onclick="showView('notify')">Meldingen instellen</button></div>
+</section>
+</main>
+
+<nav class="bottomnav">
+  <button class="active" data-view="home"><span class="icon">🏠</span>Start</button>
+  <button data-view="new"><span class="icon">➕</span>Nieuw</button>
+  <button data-view="list"><span class="icon">📋</span>Klussen</button>
+  <button data-view="team"><span class="icon">👥</span>Collega’s</button>
+</nav>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+
+const KEYS = {
+  requests: 'dus_requests_v4',
+  colleagues: 'dus_colleagues_v4',
+  notifications: 'dus_notify_settings_v4'
+};
+
+const $ = (id) => document.getElementById(id);
+
+function readJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (error) {
+    console.error('Opslag lezen mislukt:', error);
+    return fallback;
+  }
+}
+
+function uid() {
+  return (window.crypto && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+let colleagues = readJSON(KEYS.colleagues, [
+  { id: uid(), name: 'Ikzelf', email: '' }
+]);
+let requests = readJSON(KEYS.requests, []);
+let notifySettings = readJSON(KEYS.notifications, {});
+
+const els = {
+  requestForm: $('requestForm'),
+  colleagueForm: $('colleagueForm'),
+  locationInput: $('location'),
+  trade: $('trade'),
+  client: $('client'),
+  people: $('people'),
+  startDate: $('startDate'),
+  endDate: $('endDate'),
+  owner: $('owner'),
+  priority: $('priority'),
+  work: $('work'),
+  details: $('details'),
+  colName: $('colName'),
+  colEmail: $('colEmail'),
+  search: $('search'),
+  filterStatus: $('filterStatus'),
+  filterTrade: $('filterTrade'),
+  requestList: $('requestList'),
+  colleagueList: $('colleagueList'),
+  latest: $('latest'),
+  stNieuw: $('stNieuw'),
+  stBehandeling: $('stBehandeling'),
+  stIngevuld: $('stIngevuld'),
+  stTotaal: $('stTotaal'),
+  toast: $('toast'),
+  emailPublicKey: $('emailPublicKey'),
+  emailServiceId: $('emailServiceId'),
+  emailTemplateId: $('emailTemplateId'),
+  notifyEnabled: $('notifyEnabled')
+};
+
+function persist() {
+  try {
+    localStorage.setItem(KEYS.colleagues, JSON.stringify(colleagues));
+    localStorage.setItem(KEYS.requests, JSON.stringify(requests));
+    return true;
+  } catch (error) {
+    console.error('Opslaan mislukt:', error);
+    showToast('Opslaan op dit toestel is mislukt.');
+    return false;
+  }
+}
+
+function escapeHtml(value = '') {
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+}
+
+function formatDate(value) {
+  if (!value) return '-';
+  return new Date(`${value}T12:00:00`).toLocaleDateString('nl-NL');
+}
+
+function ownerName(id) {
+  return colleagues.find((colleague) => colleague.id === id)?.name || 'Niet toegewezen';
+}
+
+function statusClass(status) {
+  if (status === 'Nieuw') return 'nieuw';
+  if (status === 'In behandeling') return 'behandeling';
+  if (status === 'Ingevuld') return 'ingevuld';
+  return 'geannuleerd';
+}
+
+let toastTimer;
+function showToast(message) {
+  if (!els.toast) return;
+  clearTimeout(toastTimer);
+  els.toast.textContent = message;
+  els.toast.style.display = 'block';
+  toastTimer = setTimeout(() => {
+    els.toast.style.display = 'none';
+  }, 3200);
+}
+
+window.showView = function showView(id) {
+  const target = $(id);
+  if (!target) return;
+
+  document.querySelectorAll('.view').forEach((view) => view.classList.remove('active'));
+  document.querySelectorAll('.bottomnav button').forEach((button) => {
+    button.classList.toggle('active', button.dataset.view === id);
+  });
+
+  target.classList.add('active');
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+document.querySelectorAll('.bottomnav button').forEach((button) => {
+  button.addEventListener('click', () => window.showView(button.dataset.view));
+});
+
+if (els.requestForm) {
+  els.requestForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const newRequest = {
+      id: uid(),
+      location: els.locationInput.value.trim(),
+      trade: els.trade.value,
+      client: els.client.value.trim(),
+      people: Number(els.people.value || 1),
+      startDate: els.startDate.value,
+      endDate: els.endDate.value,
+      owner: els.owner.value,
+      priority: els.priority.value,
+      work: els.work.value.trim(),
+      details: els.details.value.trim(),
+      status: 'Nieuw',
+      notes: [],
+      createdAt: new Date().toISOString()
+    };
+
+    if (!newRequest.location || !newRequest.trade || !newRequest.client ||
+        !newRequest.startDate || !newRequest.work) {
+      showToast('Vul alle verplichte velden in.');
+      return;
+    }
+
+    requests.unshift(newRequest);
+
+    if (!persist()) {
+      requests.shift();
+      return;
+    }
+
+    els.requestForm.reset();
+    els.people.value = 1;
+    render();
+    window.showView('list');
+    showToast('Klus is opgeslagen.');
+
+    if (notifySettings.enabled) {
+      await sendNotifications(newRequest);
+    }
+  });
+}
+
+if (els.colleagueForm) {
+  els.colleagueForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const name = els.colName.value.trim();
+    const email = els.colEmail.value.trim();
+
+    if (!name || !email) {
+      showToast('Vul naam en e-mailadres in.');
+      return;
+    }
+
+    colleagues.push({ id: uid(), name, email });
+    persist();
+    els.colleagueForm.reset();
+    render();
+    showToast('Collega toegevoegd.');
+  });
+}
+
+[els.search, els.filterStatus, els.filterTrade].forEach((element) => {
+  if (element) element.addEventListener('input', renderRequests);
+});
+
+function requestCard(request, compact = false) {
+  const latestNote = (request.notes || []).slice(-1).map((note) =>
+    `<div class="note"><strong>${escapeHtml(note.by)}</strong><br>${escapeHtml(note.text)}</div>`
+  ).join('');
+
+  return `<article class="job">
+    <div class="jobhead">
+      <h3>${escapeHtml(request.trade)} – ${escapeHtml(request.location)}</h3>
+      <span class="badge ${statusClass(request.status)}">${escapeHtml(request.status)}</span>
+    </div>
+    <div class="meta">
+      <span>🏢 ${escapeHtml(request.client)}</span>
+      <span>📅 ${formatDate(request.startDate)}</span>
+      <span>👷 ${request.people} persoon/personen</span>
+      <span>👤 ${escapeHtml(ownerName(request.owner))}</span>
+    </div>
+    ${compact ? '' : `
+      <p><strong>Werkzaamheden</strong><br>${escapeHtml(request.work)}</p>
+      ${request.details ? `<p><strong>Bijzonderheden</strong><br>${escapeHtml(request.details)}</p>` : ''}
+      ${latestNote}
+      <div class="actions">
+        <button type="button" class="btn secondary" onclick="setStatus('${request.id}','In behandeling')">Pak op</button>
+        <button type="button" class="btn success" onclick="setStatus('${request.id}','Ingevuld')">Ingevuld</button>
+        <button type="button" class="btn secondary" onclick="assignRequest('${request.id}')">Toewijzen</button>
+        <button type="button" class="btn secondary" onclick="addNote('${request.id}')">Opmerking</button>
+        <button type="button" class="btn danger full" onclick="setStatus('${request.id}','Geannuleerd')">Annuleren</button>
+      </div>`}
+  </article>`;
+}
+
+function renderRequests() {
+  if (!els.requestList) return;
+
+  const query = (els.search?.value || '').trim().toLowerCase();
+  const selectedStatus = els.filterStatus?.value || '';
+  const selectedTrade = els.filterTrade?.value || '';
+
+  const filtered = requests.filter((request) => {
+    const searchable = [request.location, request.client, request.work, request.trade]
+      .join(' ')
+      .toLowerCase();
+
+    return (!selectedStatus || request.status === selectedStatus) &&
+      (!selectedTrade || request.trade === selectedTrade) &&
+      (!query || searchable.includes(query));
+  });
+
+  els.requestList.innerHTML = filtered.length
+    ? filtered.map((request) => requestCard(request)).join('')
+    : '<div class="empty">Geen aanvragen gevonden.</div>';
+}
+
+function render() {
+  if (els.owner) {
+    els.owner.innerHTML = '<option value="">Niet toewijzen</option>' +
+      colleagues.map((colleague) =>
+        `<option value="${colleague.id}">${escapeHtml(colleague.name)}</option>`
+      ).join('');
+  }
+
+  if (els.colleagueList) {
+    els.colleagueList.innerHTML = colleagues.length
+      ? colleagues.map((colleague) => `
+        <div class="job">
+          <strong>${escapeHtml(colleague.name)}</strong>
+          <div class="muted">${escapeHtml(colleague.email || 'Geen e-mailadres')}</div>
+          <div class="actions">
+            <button type="button" class="btn danger full" onclick="removeColleague('${colleague.id}')">Verwijderen</button>
+          </div>
+        </div>`).join('')
+      : '<div class="empty">Nog geen collega’s.</div>';
+  }
+
+  if (els.latest) {
+    els.latest.innerHTML = requests.length
+      ? requests.slice(0, 3).map((request) => requestCard(request, true)).join('')
+      : '<div class="empty">Nog geen aanvragen.</div>';
+  }
+
+  if (els.stNieuw) els.stNieuw.textContent = requests.filter((r) => r.status === 'Nieuw').length;
+  if (els.stBehandeling) els.stBehandeling.textContent = requests.filter((r) => r.status === 'In behandeling').length;
+  if (els.stIngevuld) els.stIngevuld.textContent = requests.filter((r) => r.status === 'Ingevuld').length;
+  if (els.stTotaal) els.stTotaal.textContent = requests.length;
+
+  if (els.emailPublicKey) els.emailPublicKey.value = notifySettings.publicKey || '';
+  if (els.emailServiceId) els.emailServiceId.value = notifySettings.serviceId || '';
+  if (els.emailTemplateId) els.emailTemplateId.value = notifySettings.templateId || '';
+  if (els.notifyEnabled) els.notifyEnabled.checked = Boolean(notifySettings.enabled);
+
+  renderRequests();
+}
+
+window.setStatus = function setStatus(id, status) {
+  const request = requests.find((item) => item.id === id);
+  if (!request) return;
+
+  request.status = status;
+  persist();
+  render();
+  showToast('Status bijgewerkt.');
+};
+
+window.assignRequest = function assignRequest(id) {
+  const request = requests.find((item) => item.id === id);
+  if (!request || !colleagues.length) return;
+
+  const menu = colleagues.map((colleague, index) => `${index + 1}. ${colleague.name}`).join('\n');
+  const answer = window.prompt(`Kies het nummer van de collega:\n${menu}`);
+  if (answer === null) return;
+
+  const colleague = colleagues[Number(answer) - 1];
+  if (!colleague) {
+    showToast('Ongeldige keuze.');
+    return;
+  }
+
+  request.owner = colleague.id;
+  if (request.status === 'Nieuw') request.status = 'In behandeling';
+  persist();
+  render();
+  showToast(`Toegewezen aan ${colleague.name}.`);
+};
+
+window.addNote = function addNote(id) {
+  const request = requests.find((item) => item.id === id);
+  if (!request) return;
+
+  const text = window.prompt('Opmerking:');
+  if (!text?.trim()) return;
+
+  const by = window.prompt('Naam collega:', 'Ikzelf') || 'Onbekend';
+  request.notes = request.notes || [];
+  request.notes.push({ text: text.trim(), by, at: new Date().toISOString() });
+
+  persist();
+  render();
+  showToast('Opmerking toegevoegd.');
+};
+
+window.removeColleague = function removeColleague(id) {
+  if (!window.confirm('Collega verwijderen?')) return;
+
+  colleagues = colleagues.filter((colleague) => colleague.id !== id);
+  requests.forEach((request) => {
+    if (request.owner === id) request.owner = '';
+  });
+
+  persist();
+  render();
+  showToast('Collega verwijderd.');
+};
+
+window.saveNotifySettings = function saveNotifySettings() {
+  notifySettings = {
+    publicKey: els.emailPublicKey?.value.trim() || '',
+    serviceId: els.emailServiceId?.value.trim() || '',
+    templateId: els.emailTemplateId?.value.trim() || '',
+    enabled: Boolean(els.notifyEnabled?.checked)
+  };
+
+  localStorage.setItem(KEYS.notifications, JSON.stringify(notifySettings));
+  showToast('Meldingsinstellingen opgeslagen.');
+};
+
+async function sendNotifications(request) {
+  if (!notifySettings.publicKey || !notifySettings.serviceId || !notifySettings.templateId) {
+    showToast('Klus opgeslagen; meldingen zijn nog niet ingesteld.');
+    return;
+  }
+
+  if (!window.emailjs) {
+    showToast('Klus opgeslagen; meldingsdienst kon niet laden.');
+    return;
+  }
+
+  const recipients = colleagues.filter((colleague) =>
+    colleague.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(colleague.email)
+  );
+
+  if (!recipients.length) {
+    showToast('Klus opgeslagen; voeg e-mailadressen van collega’s toe.');
+    return;
+  }
+
+  try {
+    window.emailjs.init({ publicKey: notifySettings.publicKey });
+
+    await Promise.all(recipients.map((colleague) =>
+      window.emailjs.send(
+        notifySettings.serviceId,
+        notifySettings.templateId,
+        {
+          to_email: colleague.email,
+          to_name: colleague.name,
+          trade: request.trade,
+          location: request.location,
+          client: request.client,
+          start_date: formatDate(request.startDate),
+          work: request.work,
+          app_url: window.location.href.split('#')[0]
+        }
+      )
+    ));
+
+    showToast(`Melding verstuurd naar ${recipients.length} collega('s).`);
+  } catch (error) {
+    console.error('Melding mislukt:', error);
+    showToast('Klus opgeslagen; melding versturen is mislukt.');
+  }
+}
+
+window.testNotify = async function testNotify() {
+  window.saveNotifySettings();
+  await sendNotifications({
+    trade: 'Testklus',
+    location: 'Testlocatie',
+    client: 'DUS',
+    startDate: new Date().toISOString().slice(0, 10),
+    work: 'Dit is een testmelding vanuit de aanvraag-app.'
+  });
+};
+
+if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('./sw.js').catch(console.error);
+}
+
+render();
+
+</script>
+</body>
+</html>
